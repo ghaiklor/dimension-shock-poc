@@ -18,19 +18,26 @@
 
   function onAIRespond(boardId, event) {
     const data = event.data;
-    const board = GAMES[boardId].board;
     const game = GAMES[boardId].game;
 
     if (data.match(/bestmove/)) {
       const move = data.slice(9);
       const source = move.slice(0, 2);
-      const target = move.slice(2);
+      const target = move.slice(2, -1);
 
       console.log(`${source}-${target}`);
-      console.log(game.move({from: source, to: target, promotion: 'q'}));
 
-      board.position(game.fen());
+      game.move({from: source, to: target, promotion: 'q'});
+      updateBoard(boardId);
     }
+  }
+
+  function updateBoard(boardId) {
+    const game = GAMES[boardId].game;
+    const board = GAMES[boardId].board;
+    const fen = game.fen();
+
+    board.position(fen);
   }
 
   function removeGraySquares(boardId) {
@@ -47,17 +54,14 @@
   function boardOnDragStart(boardId, source, piece, position, orientation) {
     const game = GAMES[boardId].game;
 
-    if (
-      game.game_over() ||
-      (game.turn() === 'w' && piece.search(/^b/) !== -1) ||
-      (game.turn() === 'b' && piece.search(/^w/) !== -1)
-    ) {
-      return false;
-    }
+    if (game.game_over()) return false;
+    if (piece && piece.match(/b/)) return false;
   }
 
   function boardOnDrop(boardId, source, target, piece, newPosition, oldPosition, orientation) {
     removeGraySquares(boardId);
+
+    if (piece && piece.match(/b/)) return 'snapback';
 
     const game = GAMES[boardId].game;
     const move = game.move({from: source, to: target, promotion: 'q'});
@@ -70,6 +74,8 @@
   }
 
   function boardOnMouseoverSquare(boardId, newSquare, newPiece, position, orientation) {
+    if (newPiece && newPiece.match(/^b/)) return;
+
     const game = GAMES[boardId].game;
     const moves = game.moves({square: newSquare, verbose: true});
 
