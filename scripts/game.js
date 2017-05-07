@@ -1,100 +1,97 @@
 (function () {
-  const GAMES = [new Chess(), new Chess()];
-  const AI = [new Worker('scripts/garbochess.js'), new Worker('scripts/garbochess.js')];
-
-  AI[0].onmessage = function (e) {
-    console.log(e);
-  };
-
-  function removeGraySquares() {
-    $('#board1 .square-55d63').css('background', '');
+  function noop(boardId) {
   }
 
-  function greySquare(square) {
-    const squareEl = $(`#board1 .square-${square}`);
+  function removeGraySquares(boardId) {
+    $(`#board${boardId} .square-55d63`).css('background', '');
+  }
+
+  function greySquare(boardId, square) {
+    const squareEl = $(`#board${boardId} .square-${square}`);
     const background = squareEl.hasClass('black-3c85d') ? '#696969' : '#a9a9a9';
 
     squareEl.css('background', background);
   }
 
-  function boardOnChange(oldPosition, newPosition) {
+  function boardOnDragStart(boardId, source, piece, position, orientation) {
+    const game = GAMES[boardId].game;
 
-  }
-
-  function boardOnDragStart(source, piece, position, orientation) {
     if (
-      GAMES[0].game_over() ||
-      (GAMES[0].turn() === 'w' && piece.search(/^b/) !== -1) ||
-      (GAMES[0].turn() === 'b' && piece.search(/^w/) !== -1)
+      game.game_over() ||
+      (game.turn() === 'w' && piece.search(/^b/) !== -1) ||
+      (game.turn() === 'b' && piece.search(/^w/) !== -1)
     ) {
       return false;
     }
   }
 
-  function boardOnDragMove(newPosition, oldPosition, source, piece, boardPosition, orientation) {
+  function boardOnDrop(boardId, source, target, piece, newPosition, oldPosition, orientation) {
+    removeGraySquares(boardId);
 
-  }
-
-  function boardOnDrop(source, target, piece, newPosition, oldPosition, orientation) {
-    removeGraySquares();
-
-    const move = GAMES[0].move({from: source, to: target, promotion: 'q'});
+    const game = GAMES[boardId].game;
+    const move = game.move({from: source, to: target, promotion: 'q'});
 
     if (move === null) return 'snapback';
   }
 
-  function boardOnMouseoutSquare(oldSquare, oldPiece, position, orientation) {
-    removeGraySquares();
+  function boardOnMouseoutSquare(boardId, oldSquare, oldPiece, position, orientation) {
+    removeGraySquares(boardId);
   }
 
-  function boardOnMouseoverSquare(newSquare, newPiece, position, orientation) {
-    const moves = GAMES[0].moves({square: newSquare, verbose: true});
+  function boardOnMouseoverSquare(boardId, newSquare, newPiece, position, orientation) {
+    const game = GAMES[boardId].game;
+    const moves = game.moves({square: newSquare, verbose: true});
 
     if (moves.length === 0) return;
 
-    greySquare(newSquare);
+    greySquare(boardId, newSquare);
 
     for (let i = 0; i < moves.length; i++) {
-      greySquare(moves[i].to);
+      greySquare(boardId, moves[i].to);
     }
   }
 
-  function boardOnMoveEnd(oldPosition, newPosition) {
+  function boardOnSnapEnd(boardId, source, target, piece) {
+    const game = GAMES[boardId].game;
+    const board = GAMES[boardId].board;
 
+    board.position(game.fen());
   }
 
-  function boardOnSnapbackEnd(piece, square, position, orientation) {
-
+  function BOARD_CONFIG(boardId) {
+    return {
+      draggable: true,
+      dropOffBoard: 'snapback',
+      position: 'start',
+      orientation: 'white',
+      showNotation: true,
+      sparePieces: false,
+      showErrors: 'console',
+      pieceTheme: 'images/chesspieces/default/{piece}.png',
+      appearSpeed: 'fast',
+      moveSpeed: 'fast',
+      snapbackSpeed: 'fast',
+      snapSpeed: 'fast',
+      trashSpeed: 'fast',
+      onChange: noop.bind(null, boardId),
+      onDragStart: boardOnDragStart.bind(null, boardId),
+      onDragMove: noop.bind(null, boardId),
+      onDrop: boardOnDrop.bind(null, boardId),
+      onMouseoutSquare: boardOnMouseoutSquare.bind(null, boardId),
+      onMouseoverSquare: boardOnMouseoverSquare.bind(null, boardId),
+      onMoveEnd: noop.bind(null, boardId),
+      onSnapbackEnd: noop.bind(null, boardId),
+      onSnapEnd: boardOnSnapEnd.bind(null, boardId),
+    }
   }
 
-  function boardOnSnapEnd(source, target, piece) {
-    BOARDS[0].position(GAMES[0].fen());
-  }
-
-  const BOARD_CONFIG = {
-    draggable: true,
-    dropOffBoard: 'snapback',
-    position: 'start',
-    orientation: 'white',
-    showNotation: true,
-    sparePieces: false,
-    showErrors: 'console',
-    pieceTheme: 'images/chesspieces/default/{piece}.png',
-    appearSpeed: 'fast',
-    moveSpeed: 'fast',
-    snapbackSpeed: 'fast',
-    snapSpeed: 'fast',
-    trashSpeed: 'fast',
-    onChange: boardOnChange,
-    onDragStart: boardOnDragStart,
-    onDragMove: boardOnDragMove,
-    onDrop: boardOnDrop,
-    onMouseoutSquare: boardOnMouseoutSquare,
-    onMouseoverSquare: boardOnMouseoverSquare,
-    onMoveEnd: boardOnMoveEnd,
-    onSnapbackEnd: boardOnSnapbackEnd,
-    onSnapEnd: boardOnSnapEnd,
-  };
-
-  const BOARDS = [ChessBoard('board1', BOARD_CONFIG), ChessBoard('board2', BOARD_CONFIG)];
+  const GAMES = [{
+    board: ChessBoard('board0', BOARD_CONFIG(0)),
+    game: new Chess(),
+    ai: new Worker('scripts/garbochess.js')
+  }, {
+    board: ChessBoard('board1', BOARD_CONFIG(1)),
+    game: new Chess(),
+    ai: new Worker('scripts/garbochess.js')
+  }];
 })();
