@@ -2,10 +2,16 @@
   function noop(boardId) {
   }
 
+  /**
+   * Start a new game.
+   */
   function newGame() {
     initializeAI();
   }
 
+  /**
+   * Resets an AI configuration and starts as a new game.
+   */
   function initializeAI() {
     GAMES[0].ai.postMessage('ucinewgame');
     GAMES[0].ai.postMessage('position startpos');
@@ -16,9 +22,14 @@
     GAMES[1].ai.onmessage = onAIRespond.bind(null, 1);
   }
 
+  /**
+   * Triggers when AI responds with a next move.
+   *
+   * @param {Number} boardId
+   * @param {Object} event
+   */
   function onAIRespond(boardId, event) {
     const data = event.data;
-    const game = GAMES[boardId].game;
 
     if (data.match(/bestmove/)) {
       const move = data.slice(9);
@@ -27,11 +38,30 @@
 
       console.log(`${source}-${target}`);
 
-      game.move({from: source, to: target, promotion: 'q'});
+      makeMove(boardId, source, target);
       updateBoard(boardId);
     }
   }
 
+  /**
+   * Makes a move in a game.
+   *
+   * @param {Number} boardId
+   * @param {String} from
+   * @param {String} to
+   * @returns {Object}
+   */
+  function makeMove(boardId, from, to) {
+    const game = GAMES[boardId].game;
+
+    return game.move({from: from, to: to, promotion: 'q'});
+  }
+
+  /**
+   * Updates display board to fit the current game position.
+   *
+   * @param {Number} boardId
+   */
   function updateBoard(boardId) {
     const game = GAMES[boardId].game;
     const board = GAMES[boardId].board;
@@ -40,10 +70,21 @@
     board.position(fen);
   }
 
+  /**
+   * Removes a grey background from a square.
+   *
+   * @param {String} boardId
+   */
   function removeGraySquares(boardId) {
     $(`#board${boardId} .square-55d63`).css('background', '');
   }
 
+  /**
+   * Makes a square with grey background.
+   *
+   * @param {Number} boardId
+   * @param {String} square
+   */
   function greySquare(boardId, square) {
     const squareEl = $(`#board${boardId} .square-${square}`);
     const background = squareEl.hasClass('black-3c85d') ? '#696969' : '#a9a9a9';
@@ -51,6 +92,16 @@
     squareEl.css('background', background);
   }
 
+  /**
+   * Triggers when piece is starting to drag.
+   *
+   * @param {Number} boardId
+   * @param {String} source
+   * @param {String} piece
+   * @param {String} position
+   * @param {String} orientation
+   * @returns {Boolean}
+   */
   function boardOnDragStart(boardId, source, piece, position, orientation) {
     const game = GAMES[boardId].game;
 
@@ -58,21 +109,49 @@
     if (piece && piece.match(/b/)) return false;
   }
 
+  /**
+   * Triggers when piece is dropped on a cell.
+   *
+   * @param {Number} boardId
+   * @param {String} source
+   * @param {String} target
+   * @param {String} piece
+   * @param {String} newPosition
+   * @param {String} oldPosition
+   * @param {String} orientation
+   * @returns {String}
+   */
   function boardOnDrop(boardId, source, target, piece, newPosition, oldPosition, orientation) {
     removeGraySquares(boardId);
 
     if (piece && piece.match(/b/)) return 'snapback';
 
-    const game = GAMES[boardId].game;
-    const move = game.move({from: source, to: target, promotion: 'q'});
-
+    const move = makeMove(boardId, source, target);
     if (move === null) return 'snapback';
   }
 
+  /**
+   * Triggers when mouse is going out of square region.
+   *
+   * @param {Number} boardId
+   * @param {String} oldSquare
+   * @param {String} oldPiece
+   * @param {String} position
+   * @param {String} orientation
+   */
   function boardOnMouseoutSquare(boardId, oldSquare, oldPiece, position, orientation) {
     removeGraySquares(boardId);
   }
 
+  /**
+   * Triggers when mouse is moving over square.
+   *
+   * @param {Number} boardId
+   * @param {String} newSquare
+   * @param {String} newPiece
+   * @param {String} position
+   * @param {String} orientation
+   */
   function boardOnMouseoverSquare(boardId, newSquare, newPiece, position, orientation) {
     if (newPiece && newPiece.match(/^b/)) return;
 
@@ -88,17 +167,31 @@
     }
   }
 
+  /**
+   * Triggers when snap is done on game board.
+   *
+   * @param {Number} boardId
+   * @param {String} source
+   * @param {String} target
+   * @param {String} piece
+   */
   function boardOnSnapEnd(boardId, source, target, piece) {
     const game = GAMES[boardId].game;
-    const board = GAMES[boardId].board;
     const ai = GAMES[boardId].ai;
     const fen = game.fen();
 
-    board.position(fen);
     ai.postMessage(`position fen ${fen}`);
     ai.postMessage('go depth 4');
+
+    updateBoard(boardId);
   }
 
+  /**
+   * Creates a configuration for a display board, based on its ID.
+   *
+   * @param {Number} boardId
+   * @returns {Object}
+   */
   function BOARD_CONFIG(boardId) {
     return {
       draggable: true,
@@ -126,6 +219,11 @@
     }
   }
 
+  // Initialize two game boards
+  // Each of it has its own AI worker, game rules and board for display
+  // Board is used for displaying current game on a website
+  // Game is used for checking and calculating the current game position, etc...
+  // AI is used for calculating the next move based on current position of the game
   const GAMES = [{
     board: ChessBoard('board0', BOARD_CONFIG(0)),
     game: new Chess(),
