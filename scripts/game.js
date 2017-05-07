@@ -2,6 +2,37 @@
   function noop(boardId) {
   }
 
+  function newGame() {
+    initializeAI();
+  }
+
+  function initializeAI() {
+    GAMES[0].ai.postMessage('ucinewgame');
+    GAMES[0].ai.postMessage('position startpos');
+    GAMES[0].ai.onmessage = onAIRespond.bind(null, 0);
+
+    GAMES[1].ai.postMessage('ucinewgame');
+    GAMES[1].ai.postMessage('position startpos');
+    GAMES[1].ai.onmessage = onAIRespond.bind(null, 1);
+  }
+
+  function onAIRespond(boardId, event) {
+    const data = event.data;
+    const board = GAMES[boardId].board;
+    const game = GAMES[boardId].game;
+
+    if (data.match(/bestmove/)) {
+      const move = data.slice(9);
+      const source = move.slice(0, 2);
+      const target = move.slice(2);
+
+      console.log(`${source}-${target}`);
+      console.log(game.move({from: source, to: target, promotion: 'q'}));
+
+      board.position(game.fen());
+    }
+  }
+
   function removeGraySquares(boardId) {
     $(`#board${boardId} .square-55d63`).css('background', '');
   }
@@ -54,8 +85,12 @@
   function boardOnSnapEnd(boardId, source, target, piece) {
     const game = GAMES[boardId].game;
     const board = GAMES[boardId].board;
+    const ai = GAMES[boardId].ai;
+    const fen = game.fen();
 
-    board.position(game.fen());
+    board.position(fen);
+    ai.postMessage(`position fen ${fen}`);
+    ai.postMessage('go depth 4');
   }
 
   function BOARD_CONFIG(boardId) {
@@ -88,10 +123,12 @@
   const GAMES = [{
     board: ChessBoard('board0', BOARD_CONFIG(0)),
     game: new Chess(),
-    ai: new Worker('scripts/garbochess.js')
+    ai: new Worker('scripts/lozza.js'),
   }, {
     board: ChessBoard('board1', BOARD_CONFIG(1)),
     game: new Chess(),
-    ai: new Worker('scripts/garbochess.js')
+    ai: new Worker('scripts/lozza.js'),
   }];
+
+  newGame();
 })();
