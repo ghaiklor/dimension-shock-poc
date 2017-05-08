@@ -10,6 +10,13 @@
   }
 
   /**
+   * Triggers when game is over.
+   */
+  function gameOver() {
+    alert('Game Over');
+  }
+
+  /**
    * Resets an AI configuration and starts as a new game.
    */
   function initializeAI() {
@@ -53,8 +60,11 @@
    */
   function makeMove(boardId, from, to) {
     const game = GAMES[boardId].game;
+    const move = game.move({from: from, to: to, promotion: 'q'});
 
-    return game.move({from: from, to: to, promotion: 'q'});
+    if (game.game_over()) return gameOver();
+
+    return move;
   }
 
   /**
@@ -85,7 +95,7 @@
    * @param {Number} boardId
    * @param {String} square
    */
-  function greySquare(boardId, square) {
+  function graySquare(boardId, square) {
     const squareEl = $(`#board${boardId} .square-${square}`);
     const background = squareEl.hasClass('black-3c85d') ? '#696969' : '#a9a9a9';
 
@@ -147,23 +157,23 @@
    * Triggers when mouse is moving over square.
    *
    * @param {Number} boardId
-   * @param {String} newSquare
-   * @param {String} newPiece
+   * @param {String} square
+   * @param {String} piece
    * @param {String} position
    * @param {String} orientation
    */
-  function boardOnMouseoverSquare(boardId, newSquare, newPiece, position, orientation) {
-    if (newPiece && newPiece.match(/^b/)) return;
+  function boardOnMouseoverSquare(boardId, square, piece, position, orientation) {
+    if (piece && piece.match(/^b/)) return;
 
     const game = GAMES[boardId].game;
-    const moves = game.moves({square: newSquare, verbose: true});
+    const moves = game.moves({square: square, verbose: true});
 
     if (moves.length === 0) return;
 
-    greySquare(boardId, newSquare);
+    graySquare(boardId, square);
 
     for (let i = 0; i < moves.length; i++) {
-      greySquare(boardId, moves[i].to);
+      graySquare(boardId, moves[i].to);
     }
   }
 
@@ -178,9 +188,8 @@
   function boardOnSnapEnd(boardId, source, target, piece) {
     const game = GAMES[boardId].game;
     const ai = GAMES[boardId].ai;
-    const fen = game.fen();
 
-    ai.postMessage(`position fen ${fen}`);
+    ai.postMessage(`position fen ${game.fen()}`);
     ai.postMessage('go depth 4');
 
     updateBoard(boardId);
