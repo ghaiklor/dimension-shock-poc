@@ -2,9 +2,10 @@
   const dimensionShockCounterEl = $('#dimension-shock-counter');
   const board0El = $('#board0');
   const board1El = $('#board1');
+  const MOVES_BEFORE_SHOCK = 10;
 
   let IS_SHOCKED = false;
-  let leftBeforeShock = 2;
+  let leftBeforeShock = MOVES_BEFORE_SHOCK;
 
   function noop(boardId) {
   }
@@ -22,31 +23,6 @@
    */
   function gameOver() {
     alert('Game Over');
-  }
-
-  /**
-   * Resets an AI configuration and starts as a new game.
-   */
-  function initializeAI() {
-    GAMES[0].ai.postMessage('ucinewgame');
-    GAMES[0].ai.postMessage('position startpos');
-    GAMES[0].ai.onmessage = onAIRespond.bind(null, 0);
-
-    GAMES[1].ai.postMessage('ucinewgame');
-    GAMES[1].ai.postMessage('position startpos');
-    GAMES[1].ai.onmessage = onAIRespond.bind(null, 1);
-  }
-
-  /**
-   * Updates shock counter and triggers dimension shock if needed.
-   */
-  function updateShockCounter() {
-    if (leftBeforeShock === 0) {
-      leftBeforeShock = 5;
-      dimensionShock();
-    }
-
-    dimensionShockCounterEl.text(`Dimension Shock after ${leftBeforeShock} move(s)`);
   }
 
   function dimensionShock() {
@@ -75,6 +51,31 @@
     }
 
     IS_SHOCKED = !IS_SHOCKED;
+  }
+
+  /**
+   * Resets an AI configuration and starts as a new game.
+   */
+  function initializeAI() {
+    GAMES[0].ai.postMessage('ucinewgame');
+    GAMES[0].ai.postMessage('position startpos');
+    GAMES[0].ai.onmessage = onAIRespond.bind(null, 0);
+
+    GAMES[1].ai.postMessage('ucinewgame');
+    GAMES[1].ai.postMessage('position startpos');
+    GAMES[1].ai.onmessage = onAIRespond.bind(null, 1);
+  }
+
+  /**
+   * Updates shock counter and triggers dimension shock if needed.
+   */
+  function updateShockCounter() {
+    if (leftBeforeShock === 0) {
+      leftBeforeShock = MOVES_BEFORE_SHOCK;
+      dimensionShock();
+    }
+
+    dimensionShockCounterEl.text(`Dimension Shock after ${leftBeforeShock} move(s)`);
   }
 
   /**
@@ -111,6 +112,7 @@
     const move = game.move({from: from, to: to, promotion: 'q'});
 
     if (game.game_over()) return gameOver();
+    if (move === null) return false;
 
     leftBeforeShock -= 1;
     updateShockCounter();
