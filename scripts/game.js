@@ -1,4 +1,11 @@
 (function () {
+  const dimensionShockCounterEl = $('#dimension-shock-counter');
+  const board0El = $('#board0');
+  const board1El = $('#board1');
+
+  let IS_SHOCKED = false;
+  let leftBeforeShock = 2;
+
   function noop(boardId) {
   }
 
@@ -7,6 +14,7 @@
    */
   function newGame() {
     initializeAI();
+    updateShockCounter();
   }
 
   /**
@@ -27,6 +35,46 @@
     GAMES[1].ai.postMessage('ucinewgame');
     GAMES[1].ai.postMessage('position startpos');
     GAMES[1].ai.onmessage = onAIRespond.bind(null, 1);
+  }
+
+  /**
+   * Updates shock counter and triggers dimension shock if needed.
+   */
+  function updateShockCounter() {
+    if (leftBeforeShock === 0) {
+      leftBeforeShock = 5;
+      dimensionShock();
+    }
+
+    dimensionShockCounterEl.text(`Dimension Shock after ${leftBeforeShock} move(s)`);
+  }
+
+  function dimensionShock() {
+    if (IS_SHOCKED) {
+      const game0 = GAMES[0].game;
+      const game1 = GAMES[1].game;
+      const board0 = GAMES[0].board;
+      const board1 = GAMES[1].board;
+      const board0Position = board0.position();
+      const board1Position = board1.position();
+      const mixedPosition = Object.assign(board0Position, board1Position);
+
+      board0.position(mixedPosition);
+      game0.load(board0.fen());
+
+      board1El.css('display', 'none');
+    } else {
+      const game0 = GAMES[0].game;
+      const game1 = GAMES[1].game;
+      const board1 = GAMES[1].board;
+
+      game1.load(game0.fen());
+      board1.position(game0.fen());
+
+      board1El.css('display', '');
+    }
+
+    IS_SHOCKED = !IS_SHOCKED;
   }
 
   /**
@@ -63,6 +111,9 @@
     const move = game.move({from: from, to: to, promotion: 'q'});
 
     if (game.game_over()) return gameOver();
+
+    leftBeforeShock -= 1;
+    updateShockCounter();
 
     return move;
   }
