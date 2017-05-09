@@ -108,14 +108,14 @@
     const turn0 = game0.turn() === 'b' ? 'Blacks move' : 'Whites move';
     const turn1 = game1.turn() === 'b' ? 'Blacks move' : 'Whites move';
 
-    let status = '<b>Board 1</b>: ' + turn0;
+    let status = '<b>Board 1</b>: ' + (IS_SHOCKED ? 'Shock, ' : '') + turn0;
 
     if (game0.in_checkmate()) status += ', Checkmate';
     if (game0.in_check()) status += ', Check';
     if (game0.in_draw()) status += ', Draw';
     if (game0.in_stalemate()) status += ', Stalemate';
 
-    status += '<br><b>Board 2</b>: ' + turn1;
+    status += '<br><b>Board 2</b>: ' + (IS_SHOCKED ? '' : 'Shock, ') + turn1;
 
     if (game1.in_checkmate()) status += ', Checkmate';
     if (game1.in_check()) status += ', Check';
@@ -209,6 +209,7 @@
 
     if (game.game_over()) return false;
     if (piece && piece.match(/b/)) return false;
+    if (boardId === 0 && IS_SHOCKED) return false;
   }
 
   /**
@@ -227,6 +228,7 @@
     removeGraySquares(boardId);
 
     if (piece && piece.match(/b/)) return 'snapback';
+    if (boardId === 0 && IS_SHOCKED) return 'snapback';
 
     const move = makeMove(boardId, source, target);
     if (!move) return 'snapback';
@@ -256,6 +258,7 @@
    */
   function boardOnMouseoverSquare(boardId, square, piece, position, orientation) {
     if (piece && piece.match(/^b/)) return;
+    if (boardId === 0 && IS_SHOCKED) return;
 
     const game = GAMES[boardId].game;
     const moves = game.moves({square: square, verbose: true});
