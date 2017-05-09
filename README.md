@@ -54,3 +54,7 @@ So, thanks to @squidi.
 > I have created this website to inspire creativity in others and not only are you allowed, you are encouraged.
 > My one thing is that if you do build on an idea from this website, please let people know.
 > A little credit goes a long way and it would be greatly appreciated.
+
+## Get in touch
+
+If you have any questions you'd like to discuss, feel free to contact me via [@ghaiklor](https://twitter.com/ghaiklor).
