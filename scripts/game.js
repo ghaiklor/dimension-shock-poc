@@ -3,11 +3,10 @@
   const statusMonitorEl = $('#status-monitor');
   const board0El = $('#board0');
   const board1El = $('#board1');
-  const MOVES_BEFORE_SHOCK = 3;
+  const MOVES_BEFORE_SHOCK = 11;
 
   let IS_SHOCKED = false;
   let leftBeforeShock = MOVES_BEFORE_SHOCK;
-  let randomMoveTimeout;
 
   function noop(boardId) {
   }
@@ -101,8 +100,6 @@
     console.log('AI -> ' + data);
 
     if (data.match(/bestmove/)) {
-      clearTimeout(randomMoveTimeout);
-
       const move = data.slice(9);
       const source = move.slice(0, 2);
       const target = move.slice(2, -1);
@@ -193,10 +190,7 @@
     console.log(`Game -> Available moves:`);
     console.log(moves);
 
-    const move = makeMove(boardId, moves[randomMoveIndex].from, moves[randomMoveIndex].to);
-    updateBoard(boardId);
-
-    return move;
+    return makeMove(boardId, moves[randomMoveIndex].from, moves[randomMoveIndex].to);
   }
 
   /**
@@ -286,9 +280,9 @@
     const fen = game.fen();
 
     console.log(`Board -> Drop end, sending FEN ${fen} to AI`);
-    ai.postMessage(`position fen ${fen}`);
-    ai.postMessage('go depth 3');
-    randomMoveTimeout = setTimeout(makeRandomMove, 500, boardId);
+    // ai.postMessage(`position fen ${fen}`);
+    // ai.postMessage('go depth 3');
+    makeRandomMove(boardId);
   }
 
   /**
