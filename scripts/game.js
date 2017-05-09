@@ -87,12 +87,12 @@
   function onAIRespond(boardId, event) {
     const data = event.data;
 
+    console.log('AI -> ' + data);
+
     if (data.match(/bestmove/)) {
       const move = data.slice(9);
       const source = move.slice(0, 2);
       const target = move.slice(2, -1);
-
-      console.log(`${source}-${target}`);
 
       makeMove(boardId, source, target);
       updateBoard(boardId);
@@ -131,7 +131,7 @@
   function updateShockCounter() {
     if (leftBeforeShock === 0) {
       leftBeforeShock = MOVES_BEFORE_SHOCK;
-      dimensionShock();
+      setTimeout(dimensionShock, 300);
     }
 
     dimensionShockCounterEl.text(`Dimension Shock after ${leftBeforeShock} move(s)`);
@@ -168,6 +168,8 @@
     const game = GAMES[boardId].game;
     const board = GAMES[boardId].board;
     const fen = game.fen();
+
+    console.log(`Board -> Board #${boardId} is updating...`);
 
     board.position(fen);
   }
@@ -210,6 +212,9 @@
     if (game.game_over()) return false;
     if (piece && piece.match(/b/)) return false;
     if (boardId === 0 && IS_SHOCKED) return false;
+    if (boardId === 1 && !IS_SHOCKED) return false;
+
+    console.log(`Board -> Dragging ${piece} from ${source}...`);
   }
 
   /**
@@ -229,9 +234,20 @@
 
     if (piece && piece.match(/b/)) return 'snapback';
     if (boardId === 0 && IS_SHOCKED) return 'snapback';
+    if (boardId === 1 && !IS_SHOCKED) return 'snapback';
+
+    console.log(`Game -> Trying to make move ${source}-${target} with ${piece}...`);
 
     const move = makeMove(boardId, source, target);
     if (!move) return 'snapback';
+
+    const game = GAMES[boardId].game;
+    const ai = GAMES[boardId].ai;
+    const fen = game.fen();
+
+    console.log(`Board -> Drop end, sending FEN ${fen} to AI`);
+    ai.postMessage(`position fen ${fen}`);
+    ai.postMessage('go depth 4');
   }
 
   /**
@@ -259,6 +275,7 @@
   function boardOnMouseoverSquare(boardId, square, piece, position, orientation) {
     if (piece && piece.match(/^b/)) return;
     if (boardId === 0 && IS_SHOCKED) return;
+    if (boardId === 1 && !IS_SHOCKED) return;
 
     const game = GAMES[boardId].game;
     const moves = game.moves({square: square, verbose: true});
@@ -281,12 +298,6 @@
    * @param {String} piece
    */
   function boardOnSnapEnd(boardId, source, target, piece) {
-    const game = GAMES[boardId].game;
-    const ai = GAMES[boardId].ai;
-
-    ai.postMessage(`position fen ${game.fen()}`);
-    ai.postMessage('go depth 4');
-
     updateBoard(boardId);
   }
 
@@ -323,6 +334,8 @@
     }
   }
 
+  console.log(`Game -> Initializing board, game and AI...`);
+
   // Initialize two game boards
   // Each of it has its own AI worker, game rules and board for display
   // Board is used for displaying current game on a website
@@ -337,6 +350,8 @@
     game: new Chess(),
     ai: new Worker('scripts/lozza.js'),
   }];
+
+  console.log(`Game -> Starting new game...`);
 
   newGame();
 })();
