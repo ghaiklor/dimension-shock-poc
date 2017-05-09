@@ -3,7 +3,7 @@
   const statusMonitorEl = $('#status-monitor');
   const board0El = $('#board0');
   const board1El = $('#board1');
-  const MOVES_BEFORE_SHOCK = 10;
+  const MOVES_BEFORE_SHOCK = 2;
 
   let IS_SHOCKED = false;
   let leftBeforeShock = MOVES_BEFORE_SHOCK;
@@ -28,6 +28,9 @@
     alert('Game Over');
   }
 
+  /**
+   * Makes a dimension shock.
+   */
   function dimensionShock() {
     if (IS_SHOCKED) {
       const game0 = GAMES[0].game;
@@ -38,19 +41,25 @@
       const board1Position = board1.position();
       const mixedPosition = Object.assign(board0Position, board1Position);
 
-      board0.position(mixedPosition);
-      game0.load(board0.fen());
+      Object.keys(mixedPosition).forEach(cell => {
+        const piece = mixedPosition[cell];
+        const type = piece.slice(1).toLowerCase();
+        const color = piece.slice(0, 1);
 
-      board1El.css('display', 'none');
+        game0.put({type, color}, cell);
+      });
+
+      updateBoard(0);
+
+      setTimeout(() => board1El.css('display', 'none'), 300);
     } else {
       const game0 = GAMES[0].game;
       const game1 = GAMES[1].game;
-      const board1 = GAMES[1].board;
 
       game1.load(game0.fen());
-      board1.position(game0.fen());
+      updateBoard(1);
 
-      board1El.css('display', '');
+      setTimeout(() => board1El.css('display', ''), 300);
     }
 
     IS_SHOCKED = !IS_SHOCKED;
@@ -96,15 +105,17 @@
   function updateStatusMonitor() {
     const game0 = GAMES[0].game;
     const game1 = GAMES[1].game;
+    const turn0 = game0.turn() === 'b' ? 'Blacks move' : 'Whites move';
+    const turn1 = game1.turn() === 'b' ? 'Blacks move' : 'Whites move';
 
-    let status = '<b>Board 1</b>: Playing';
+    let status = '<b>Board 1</b>: ' + turn0;
 
     if (game0.in_checkmate()) status += ', Checkmate';
     if (game0.in_check()) status += ', Check';
     if (game0.in_draw()) status += ', Draw';
     if (game0.in_stalemate()) status += ', Stalemate';
 
-    status += '<br><b>Board 2</b>: Playing';
+    status += '<br><b>Board 2</b>: ' + turn1;
 
     if (game1.in_checkmate()) status += ', Checkmate';
     if (game1.in_check()) status += ', Check';
