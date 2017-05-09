@@ -49,6 +49,10 @@
         game0.put({type, color}, cell);
       });
 
+      console.log(`Game -> Validating FEN ${game0.fen()}...`);
+      console.log(game0.validate_fen(game0.fen()));
+      game0.load(game0.fen());
+
       updateBoard(0);
 
       setTimeout(() => board1El.css('display', 'none'), 300);
@@ -103,6 +107,8 @@
    * Updates status monitor and shows the current status of each game.
    */
   function updateStatusMonitor() {
+    console.log(`Game -> Updating status...`);
+
     const game0 = GAMES[0].game;
     const game1 = GAMES[1].game;
     const turn0 = game0.turn() === 'b' ? 'Blacks move' : 'Whites move';
@@ -129,6 +135,8 @@
    * Updates shock counter and triggers dimension shock if needed.
    */
   function updateShockCounter() {
+    console.log(`Game -> Updating shock counter...`);
+
     if (leftBeforeShock === 0) {
       leftBeforeShock = MOVES_BEFORE_SHOCK;
       setTimeout(dimensionShock, 300);
