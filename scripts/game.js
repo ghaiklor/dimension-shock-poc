@@ -73,10 +73,12 @@
    * Resets an AI configuration and starts as a new game.
    */
   function initializeAI() {
+    GAMES[0].ai.postMessage('debug on');
     GAMES[0].ai.postMessage('ucinewgame');
     GAMES[0].ai.postMessage('position startpos');
     GAMES[0].ai.onmessage = onAIRespond.bind(null, 0);
 
+    GAMES[1].ai.postMessage('debug on');
     GAMES[1].ai.postMessage('ucinewgame');
     GAMES[1].ai.postMessage('position startpos');
     GAMES[1].ai.onmessage = onAIRespond.bind(null, 1);
