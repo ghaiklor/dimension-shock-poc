@@ -1,5 +1,6 @@
 (function () {
   const dimensionShockCounterEl = $('#dimension-shock-counter');
+  const statusMonitorEl = $('#status-monitor');
   const board0El = $('#board0');
   const board1El = $('#board1');
   const MOVES_BEFORE_SHOCK = 10;
@@ -16,12 +17,14 @@
   function newGame() {
     initializeAI();
     updateShockCounter();
+    updateStatusMonitor();
   }
 
   /**
    * Triggers when game is over.
    */
   function gameOver() {
+    updateStatusMonitor();
     alert('Game Over');
   }
 
@@ -67,18 +70,6 @@
   }
 
   /**
-   * Updates shock counter and triggers dimension shock if needed.
-   */
-  function updateShockCounter() {
-    if (leftBeforeShock === 0) {
-      leftBeforeShock = MOVES_BEFORE_SHOCK;
-      dimensionShock();
-    }
-
-    dimensionShockCounterEl.text(`Dimension Shock after ${leftBeforeShock} move(s)`);
-  }
-
-  /**
    * Triggers when AI responds with a next move.
    *
    * @param {Number} boardId
@@ -100,6 +91,43 @@
   }
 
   /**
+   * Updates status monitor and shows the current status of each game.
+   */
+  function updateStatusMonitor() {
+    const game0 = GAMES[0].game;
+    const game1 = GAMES[1].game;
+
+    let status = '<b>Board 1</b>: Playing';
+
+    if (game0.in_checkmate()) status += ', Checkmate';
+    if (game0.in_check()) status += ', Check';
+    if (game0.in_draw()) status += ', Draw';
+    if (game0.in_stalemate()) status += ', Stalemate';
+
+    status += '<br><b>Board 2</b>: Playing';
+
+    if (game1.in_checkmate()) status += ', Checkmate';
+    if (game1.in_check()) status += ', Check';
+    if (game1.in_draw()) status += ', Draw';
+    if (game1.in_stalemate()) status += ', Stalemate';
+
+    statusMonitorEl.html(status);
+  }
+
+  /**
+   * Updates shock counter and triggers dimension shock if needed.
+   */
+  function updateShockCounter() {
+    if (leftBeforeShock === 0) {
+      leftBeforeShock = MOVES_BEFORE_SHOCK;
+      dimensionShock();
+    }
+
+    dimensionShockCounterEl.text(`Dimension Shock after ${leftBeforeShock} move(s)`);
+    leftBeforeShock -= 1;
+  }
+
+  /**
    * Makes a move in a game.
    *
    * @param {Number} boardId
@@ -112,10 +140,10 @@
     const move = game.move({from: from, to: to, promotion: 'q'});
 
     if (game.game_over()) return gameOver();
-    if (move === null) return false;
+    if (!move) return false;
 
-    leftBeforeShock -= 1;
     updateShockCounter();
+    updateStatusMonitor();
 
     return move;
   }
@@ -190,7 +218,7 @@
     if (piece && piece.match(/b/)) return 'snapback';
 
     const move = makeMove(boardId, source, target);
-    if (move === null) return 'snapback';
+    if (!move) return 'snapback';
   }
 
   /**
