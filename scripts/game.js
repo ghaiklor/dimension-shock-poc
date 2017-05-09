@@ -3,10 +3,11 @@
   const statusMonitorEl = $('#status-monitor');
   const board0El = $('#board0');
   const board1El = $('#board1');
-  const MOVES_BEFORE_SHOCK = 11;
+  const MOVES_BEFORE_SHOCK = 3;
 
   let IS_SHOCKED = false;
   let leftBeforeShock = MOVES_BEFORE_SHOCK;
+  let randomMoveTimeout;
 
   function noop(boardId) {
   }
@@ -79,11 +80,13 @@
     GAMES[0].ai.postMessage('ucinewgame');
     GAMES[0].ai.postMessage('position startpos');
     GAMES[0].ai.onmessage = onAIRespond.bind(null, 0);
+    GAMES[0].ai.onerror = console.error.bind(console);
 
     GAMES[1].ai.postMessage('debug on');
     GAMES[1].ai.postMessage('ucinewgame');
     GAMES[1].ai.postMessage('position startpos');
     GAMES[1].ai.onmessage = onAIRespond.bind(null, 1);
+    GAMES[1].ai.onerror = console.error.bind(console);
   }
 
   /**
@@ -98,6 +101,8 @@
     console.log('AI -> ' + data);
 
     if (data.match(/bestmove/)) {
+      clearTimeout(randomMoveTimeout);
+
       const move = data.slice(9);
       const source = move.slice(0, 2);
       const target = move.slice(2, -1);
@@ -167,6 +172,29 @@
 
     updateStatusMonitor();
     updateShockCounter();
+
+    return move;
+  }
+
+  /**
+   * Makes a random move.
+   *
+   * @param {Number} boardId
+   * @returns {Object|Boolean}
+   */
+  function makeRandomMove(boardId) {
+    const game = GAMES[boardId].game;
+    const moves = game.moves({verbose: true});
+    const randomMoveIndex = Math.floor(Math.random() * moves.length);
+
+    if (moves.length === 0) return;
+
+    console.log(`Game -> AI is not responding, making a random move...`);
+    console.log(`Game -> Available moves:`);
+    console.log(moves);
+
+    const move = makeMove(boardId, moves[randomMoveIndex].from, moves[randomMoveIndex].to);
+    updateBoard(boardId);
 
     return move;
   }
@@ -259,7 +287,8 @@
 
     console.log(`Board -> Drop end, sending FEN ${fen} to AI`);
     ai.postMessage(`position fen ${fen}`);
-    ai.postMessage('go depth 4');
+    ai.postMessage('go depth 3');
+    randomMoveTimeout = setTimeout(makeRandomMove, 500, boardId);
   }
 
   /**
