@@ -3,7 +3,7 @@
   const statusMonitorEl = $('#status-monitor');
   const board0El = $('#board0');
   const board1El = $('#board1');
-  const MOVES_BEFORE_SHOCK = 2;
+  const MOVES_BEFORE_SHOCK = 11;
 
   let IS_SHOCKED = false;
   let leftBeforeShock = MOVES_BEFORE_SHOCK;
