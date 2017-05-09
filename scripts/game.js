@@ -54,6 +54,7 @@
       game0.load(game0.fen());
 
       updateBoard(0);
+      updateStatusMonitor();
 
       setTimeout(() => board1El.css('display', 'none'), 300);
     } else {
@@ -62,6 +63,7 @@
 
       game1.load(game0.fen());
       updateBoard(1);
+      updateStatusMonitor();
 
       setTimeout(() => board1El.css('display', ''), 300);
     }
@@ -163,8 +165,8 @@
     if (game.game_over()) return gameOver();
     if (!move) return false;
 
-    updateShockCounter();
     updateStatusMonitor();
+    updateShockCounter();
 
     return move;
   }
