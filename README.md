@@ -7,7 +7,7 @@
 
 A re-imagining of the chess game, where game involves playing in two distinct dimensions simultaneously.
 
-You can try it here: [https://ghaiklor.github.io/dimension-shock/](https://ghaiklor.github.io/dimension-shock/)
+You can try it here: [https://ghaiklor.github.io/dimension-shock-poc/](https://ghaiklor.github.io/dimension-shock-poc/)
 
 ## Original idea
 
